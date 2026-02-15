@@ -1,0 +1,168 @@
+version: '3.8'
+
+services:
+  # 主应用服务
+  pyramex-app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+    container_name: pyramex-app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://pyramex:${POSTGRES_PASSWORD:-pyramex123}@pyramex-db:5432/pyramex
+      - REDIS_URL=redis://pyramex-redis:6379/0
+      - OLLAMA_API_URL=http://pyramex-ollama:11434
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./data:/data
+      - ./models:/models
+      - ./logs:/logs
+    depends_on:
+      pyramex-db:
+        condition: service_healthy
+      pyramex-redis:
+        condition: service_started
+      pyramex-ollama:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - pyramex-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # GPU计算worker
+  pyramex-worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    container_name: pyramex-worker
+    environment:
+      - REDIS_URL=redis://pyramex-redis:6379/0
+      - OLLAMA_API_URL=http://pyramex-ollama:11434
+      - CUDA_VISIBLE_DEVICES=0
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./data:/data
+      - ./models:/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    depends_on:
+      - pyramex-redis
+      - pyramex-ollama
+    restart: unless-stopped
+    networks:
+      - pyramex-network
+
+  # Ollama LLM服务
+  pyramex-ollama:
+    image: ollama/ollama:latest
+    container_name: pyramex-ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    networks:
+      - pyramex-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL数据库
+  pyramex-db:
+    image: postgres:16-alpine
+    container_name: pyramex-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=pyramex
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-pyramex123}
+      - POSTGRES_DB=pyramex
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - pyramex-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pyramex"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis缓存
+  pyramex-redis:
+    image: redis:7-alpine
+    container_name: pyramex-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - pyramex-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Streamlit Web界面
+  pyramex-web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+    container_name: pyramex-web
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://pyramex-app:8000
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - pyramex-app
+    restart: unless-stopped
+    networks:
+      - pyramex-network
+
+  # Nginx反向代理
+  pyramex-nginx:
+    image: nginx:alpine
+    container_name: pyramex-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - pyramex-app
+      - pyramex-web
+    restart: unless-stopped
+    networks:
+      - pyramex-network
+
+networks:
+  pyramex-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  ollama_data:

@@ -1,0 +1,17 @@
+# GPU依赖（PyTorch with CUDA）
+# 注意：实际安装时会使用CUDA 11.5对应的版本
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# GPU加速ML库（可选）
+# cupy-cuda11x  # CuPy - GPU NumPy替代
+# cuml>=23.0.0  # RAPIDS cuML - GPU加速ML
+# cudf>=23.0.0  # RAPIDS cuDF - GPU DataFrame
+
+# 深度学习
+tensorflow>=2.13.0  # 如果需要TensorFlow
+# transformers>=4.30.0  # 如果需要BERT等模型
+
+# 图像处理（如果需要GPU加速）
+# opencv-python-headless>=4.8.0

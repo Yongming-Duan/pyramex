@@ -1,0 +1,49 @@
+# PyRamEx GPU Worker Dockerfile
+FROM nvidia/cuda:11.5.2-runtime-ubuntu22.04
+
+WORKDIR /app
+
+# 安装Python和系统依赖
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3-pip \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# 创建软链接
+RUN ln -s /usr/bin/python3.10 /usr/bin/python
+
+# 升级pip
+RUN python3 -m pip install --upgrade pip
+
+# 安装PyTorch (CUDA 11.5版本)
+COPY requirements-gpu.txt .
+RUN pip3 install --no-cache-dir -r requirements-gpu.txt || \
+    pip3 install --no-cache-dir \
+    torch==2.0.1+cu115 \
+    torchvision==0.15.2+cu115 \
+    torchaudio==2.0.2+cu115 \
+    --extra-index-url https://download.pytorch.org/whl/cu115
+
+# 安装PyRamEx和其他依赖
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# 安装RAPIDS (可选，用于GPU加速的ML)
+# RUN pip3 install --no-cache-dir \
+#     cuml \
+#     cudf \
+#     --extra-index-url https://pypi.nvidia.com
+
+# 复制worker代码
+COPY . .
+
+# 暴露端口（用于健康检查）
+EXPOSE 8001
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:8001/health || exit 1
+
+# 启动worker
+CMD ["python", "-m", "pyramex.worker.gpu_worker"]
