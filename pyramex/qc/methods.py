@@ -7,6 +7,7 @@ from typing import Dict, Optional
 import numpy as np
 from scipy import stats
 from sklearn.covariance import MinCovDet
+from pyramex.core.ramanome import QualityResult
 
 
 def quality_control(
