@@ -1,0 +1,23 @@
+# Core dependencies
+numpy>=1.20.0
+pandas>=1.3.0
+scipy>=1.7.0
+scikit-learn>=0.24.0
+matplotlib>=3.3.0
+plotly>=5.0.0
+
+# Optional ML/DL
+torch>=1.9.0
+tensorflow>=2.6.0
+
+# Optional GPU
+cupy>=9.0
+numba>=0.53
+
+# Development
+pytest>=6.0
+black>=21.0
+flake8>=3.9
+mypy>=0.910
+jupyter>=1.0.0
+ipywidgets>=7.6.0
