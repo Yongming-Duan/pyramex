@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pyramex"
 dynamic = ["version"]
 description = "A Python Ramanome Analysis Toolkit for ML/DL-friendly analysis"
-readme = "README_GITHUB.md"
+readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
