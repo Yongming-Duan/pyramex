@@ -11,7 +11,7 @@ setup(
     description="A Python Ramanome Analysis Toolkit for ML/DL",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/openclaw/pyramex",
+    url="https://github.com/Yongming-Duan/pyramex",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",

@@ -67,10 +67,10 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/openclaw/pyramex"
+Homepage = "https://github.com/Yongming-Duan/pyramex"
 Documentation = "https://pyramex.readthedocs.io"
-Repository = "https://github.com/openclaw/pyramex"
-Issues = "https://github.com/openclaw/pyramex/issues"
+Repository = "https://github.com/Yongming-Duan/pyramex"
+Issues = "https://github.com/Yongming-Duan/pyramex/issues"
 
 [tool.setuptools_scm]
 write_to = "pyramex/_version.py"
